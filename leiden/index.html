@@ -1,45 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>HistoDraw!</title>
+    <title>HistoDraw! Leiden</title>
 
     <!-- leaflet -->
     <link rel="stylesheet" href="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.css" />
     <script src="http://cdn.leafletjs.com/leaflet-0.7.3/leaflet.js"></script>
 
     <!-- leaflet draw -->
-    <link rel="stylesheet" href="leaflet.draw.css" />
-    <script src="leaflet.draw.js"></script>
+    <link rel="stylesheet" href="../leaflet.draw.css" />
+    <script src="../leaflet.draw.js"></script>
 
+    <!-- Load Esri Leaflet from CDN -->
+    <script src="//cdn.jsdelivr.net/leaflet.esri/1.0.0-rc.7/esri-leaflet.js"></script>
     <style>
-        * {
+        body {
+            background-color: #f5f5f3;
+            font-family: "Open Sans","HelveticaNeue","Helvetica Neue",Helvetica,Arial,sans-serif;
+            font-size: 16px;
             margin: 0;
             padding: 0;
-            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
         }
-
         #map {
             position: absolute;
             width: 100%;
-            height: 100%;
+            top: 0;
+            bottom: 0;
         }
         #legend {
             position: absolute;
-            padding: 10px;
+            padding: 6px;
             width: 20%;
             height: auto;
-            top:20px;
-            right: 20px;
+            bottom: 32px;
+            right: 4px;
             background-color: #efefef;
             border: 2px solid dimgray;
             z-index: 99999;
         }
-		div.leaflet-popup-content {
-		  -webkit-user-select: auto;
-		  -moz-user-select: auto;
-		  background: orange;
-		}
-
+        #legend h3 {
+            margin: 4px 0;
+        }
     </style>
 </head>
 
@@ -54,11 +55,43 @@
 </div>
 
 <script>
-    var osmUrl = 'http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-            osmAttrib = '&copy; <a href="http://openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-            osm = L.tileLayer(osmUrl, {maxZoom: 18, attribution: osmAttrib}),
-            map = new L.Map('map', {layers: [osm], center: new L.LatLng(52.1601, 4.4970), zoom: 15 });
 
+    /** Baselayer **/
+    var osm = L.tileLayer('http://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png', {
+        attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+    });
+    /** old maps */
+    var vancampen1850 = L.esri.tiledMapLayer('http://tiles.arcgis.com/tiles/brgRNnNj6DClnBDf/arcgis/rest/services/1850_van_Campen/MapServer', {
+        'opacity': 0.8
+    });
+    var vancampen1879 = L.esri.tiledMapLayer('http://tiles.arcgis.com/tiles/brgRNnNj6DClnBDf/arcgis/rest/services/1879_van_Campen/MapServer', {
+        'opacity': 0.8
+    });
+    // http://tiles.arcgis.com/tiles/brgRNnNj6DClnBDf/arcgis/rest/services/1899_van_Campen/MapServer
+    var vancampen1899 = L.esri.tiledMapLayer('http://tiles.arcgis.com/tiles/brgRNnNj6DClnBDf/arcgis/rest/services/Kaart_1899/MapServer', {
+        'opacity': 0.8
+    });
+    var streets = L.esri.basemapLayer('Streets');
+    /** Leaflet layers */
+    var baseLayers = {
+        "osm": osm,
+        "streets": streets
+    };
+    var overlays = {
+        "Van Campen 1850": vancampen1850,
+        "Van Campen 1879": vancampen1879,
+        "Van Campen 1899": vancampen1899,
+    };
+    var map = L.map('map', {
+        center: [52.16, 4.49], // leiden
+        zoom: 15,
+        layers: [osm,vancampen1850]
+    });
+
+    L.control.layers(baseLayers, overlays).addTo(map);
+
+
+    // integrate draw
     var drawnItems = new L.FeatureGroup();
     map.addLayer(drawnItems);
 
@@ -98,7 +131,7 @@
 
     map.on('draw:created', function (e) {
         var type = e.layerType,
-            layer = e.layer;
+                layer = e.layer;
 
         if (type === 'marker' || type === 'polyline' || type === 'polygon') {
             //var latlng = layer.getLatLngs().toString();
